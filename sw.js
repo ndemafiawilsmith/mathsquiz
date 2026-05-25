@@ -1,4 +1,4 @@
-const CACHE = 'mathsquiz-v1.0.1';
+const CACHE = 'mathsquiz-v1.0.2';
 const ASSETS = [
   './',
   './index.html',
@@ -27,30 +27,22 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
   const isSameOrigin = url.origin === self.location.origin;
 
-  if (isSameOrigin) {
-    e.respondWith(
-      caches.match(req).then(cached => {
-        const fetchPromise = fetch(req).then(response => {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const clone = response.clone();
-            caches.open(CACHE).then(c => c.put(req, clone));
-          }
-          return response;
-        }).catch(() => cached);
-        return cached || fetchPromise;
-      })
-    );
-  } else {
-    e.respondWith(
-      caches.match(req).then(cached => cached || fetch(req).then(response => {
-        if (response && response.status === 200) {
+  e.respondWith(
+    caches.match(req).then(cached => {
+      const fetchPromise = fetch(req).then(response => {
+        const okToCache = response && response.status === 200 &&
+          (isSameOrigin ? response.type === 'basic' : true);
+        if (okToCache) {
           const clone = response.clone();
-          caches.open(CACHE).then(c => c.put(req, clone));
+          caches.open(CACHE).then(c => c.put(req, clone)).catch(() => {});
         }
         return response;
-      }).catch(() => cached))
-    );
-  }
+      }).catch(() => cached);
+      return cached || fetchPromise;
+    })
+  );
 });
