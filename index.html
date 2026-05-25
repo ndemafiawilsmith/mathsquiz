@@ -9,7 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="MathsQuiz"/>
-<!-- Manifest injected by JS below -->
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="icon" type="image/svg+xml" href="icon.svg"/>
+<link rel="apple-touch-icon" href="icon.svg"/>
 <title>MathsQuiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -382,116 +384,17 @@ body{min-height:100%;font-family:'Nunito',sans-serif;background:var(--navy);colo
 <script>
 'use strict';
 
-/* ══ PWA — Manifest (injected as blob URL) ═══════════════════
-   A single-file PWA can't reference an external manifest.json,
-   so we generate the manifest as a JSON blob and link it dynamically.
-   The icon is an SVG encoded as a data URI — no external files needed.
-═══════════════════════════════════════════════════════════════ */
-(function injectManifest(){
-  // SVG icon — a navy circle with a white calculator emoji
-  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-    <rect width="512" height="512" rx="96" fill="#1a1a2e"/>
-    <rect x="80" y="80" width="352" height="352" rx="48" fill="#0f3460"/>
-    <rect x="120" y="130" width="272" height="70" rx="14" fill="#2E75B6"/>
-    <text x="256" y="189" text-anchor="middle" font-family="Arial" font-size="54" font-weight="bold" fill="white">123</text>
-    <rect x="120" y="220" width="78" height="54" rx="12" fill="#22c55e"/>
-    <rect x="217" y="220" width="78" height="54" rx="12" fill="#22c55e"/>
-    <rect x="314" y="220" width="78" height="54" rx="12" fill="#2E75B6"/>
-    <rect x="120" y="290" width="78" height="54" rx="12" fill="#f59e0b"/>
-    <rect x="217" y="290" width="78" height="54" rx="12" fill="#f59e0b"/>
-    <rect x="314" y="290" width="78" height="108" rx="12" fill="#ef4444"/>
-    <rect x="120" y="360" width="78" height="54" rx="12" fill="#374151"/>
-    <rect x="217" y="360" width="78" height="54" rx="12" fill="#374151"/>
-    <text x="159" y="257" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">7</text>
-    <text x="256" y="257" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">8</text>
-    <text x="353" y="257" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">÷</text>
-    <text x="159" y="327" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">4</text>
-    <text x="256" y="327" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">5</text>
-    <text x="353" y="350" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">✓</text>
-    <text x="159" y="397" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">⌫</text>
-    <text x="256" y="397" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">0</text>
-  </svg>`;
-
-  const iconDataUri = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
-
-  const manifest = {
-    name: 'MathsQuiz — Mental Arithmetic',
-    short_name: 'MathsQuiz',
-    description: 'Mental arithmetic practice for children aged 6–11',
-    start_url: './',
-    display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#1a1a2e',
-    theme_color: '#1a1a2e',
-    categories: ['education', 'games'],
-    icons: [
-      { src: iconDataUri, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-      { src: iconDataUri, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
-    ]
-  };
-
-  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-  const url  = URL.createObjectURL(blob);
-  const link = document.createElement('link');
-  link.rel   = 'manifest';
-  link.href  = url;
-  document.head.appendChild(link);
-
-  // iOS apple-touch-icon
-  const iconLink = document.createElement('link');
-  iconLink.rel   = 'apple-touch-icon';
-  iconLink.href  = iconDataUri;
-  document.head.appendChild(iconLink);
-})();
-
-
-/* ══ PWA — Service Worker ════════════════════════════════════
-   Injected as a blob URL so no external sw.js file is needed.
-   Caches the page on install; serves from cache first.
-═══════════════════════════════════════════════════════════════ */
-(function registerSW(){
-  if(!('serviceWorker' in navigator)) return;
-
-  const CACHE = 'mathsquiz-v1.0';
-  const swCode = `
-const CACHE = '${CACHE}';
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(['./'])).then(() => self.skipWaiting())
-  );
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if(cached) return cached;
-      return fetch(e.request).then(response => {
-        if(response && response.status === 200 && response.type === 'basic'){
-          const clone = response.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => cached);
-    })
-  );
-});
-  `;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl)
-    .then(reg => {
-      console.log('[MathsQuiz] SW registered', reg.scope);
-      // Listen for the app actually being installed (appinstalled event)
-      window.addEventListener('appinstalled', () => showToast('✅ MathsQuiz installed!'));
-    })
-    .catch(err => console.warn('[MathsQuiz] SW failed:', err));
-})();
+/* ══ PWA — Service Worker registration ═══════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then(reg => {
+        console.log('[MathsQuiz] SW registered', reg.scope);
+        window.addEventListener('appinstalled', () => showToast('✅ MathsQuiz installed!'));
+      })
+      .catch(err => console.warn('[MathsQuiz] SW failed:', err));
+  });
+}
 
 
 /* ══ Install prompt logic ════════════════════════════════════ */
