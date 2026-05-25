@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#1a1a2e"/>
+<meta name="description" content="MathsQuiz — mental arithmetic practice for children aged 6-11"/>
+<!-- iOS PWA meta -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MathsQuiz"/>
+<!-- Manifest injected by JS below -->
+<title>MathsQuiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1a1a2e;--navy2:#16213e;--blue:#0f3460;--mid:#2E75B6;
+  --easy:#22c55e;--easy2:#16a34a;--med:#f59e0b;--med2:#d97706;
+  --hard:#ef4444;--hard2:#dc2626;--white:#ffffff;--off:#f0f4ff;
+  --muted:rgba(255,255,255,.55);--card:rgba(255,255,255,.07);
+  --radius:20px;--shadow:0 8px 32px rgba(0,0,0,.35);
+  --level-col:var(--mid);--level-col2:var(--blue);
+}
+html{height:100%}
+body{min-height:100%;font-family:'Nunito',sans-serif;background:var(--navy);color:var(--white);display:flex;flex-direction:column;align-items:center;overflow-x:hidden;overscroll-behavior:none;}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.star{position:absolute;border-radius:50%;background:rgba(255,255,255,.7);animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--del,0s);}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+#app{position:relative;z-index:1;width:100%;max-width:480px;min-height:100vh;padding:0 0 40px;display:flex;flex-direction:column;align-items:center;}
+#header{width:100%;background:linear-gradient(135deg,var(--navy2),var(--blue));border-bottom:3px solid var(--level-col);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.4);position:sticky;top:0;z-index:10;transition:border-color .4s;}
+#header-title{font-family:'Fredoka One',sans-serif;font-size:1.7rem;letter-spacing:.5px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hdr-btn{background:var(--card);border:2px solid rgba(255,255,255,.2);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;transition:all .2s;user-select:none;flex-shrink:0;}
+.hdr-btn:hover{background:rgba(255,255,255,.15)}
+.hdr-btn:active{transform:scale(.92)}
+#back-btn{display:none;font-size:1.1rem;}
+#header-center{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;}
+
+.screen{width:100%;padding:24px 20px;display:none;flex-direction:column;align-items:center;gap:18px;animation:fadeUp .35s ease both;}
+.screen.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+/* HOME */
+#mascot{font-size:5rem;animation:bob 2.5s ease-in-out infinite;line-height:1;filter:drop-shadow(0 6px 16px rgba(0,0,0,.5))}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+#home-title{font-family:'Fredoka One',sans-serif;font-size:2.4rem;text-align:center;letter-spacing:.5px;background:linear-gradient(135deg,#60a5fa,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;}
+#home-subtitle{color:var(--muted);font-size:.95rem;font-weight:600;text-align:center;letter-spacing:.5px}
+.level-btn{width:100%;border:none;border-radius:var(--radius);padding:18px 24px;cursor:pointer;display:flex;align-items:center;gap:14px;font-family:'Nunito',sans-serif;font-weight:800;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;}
+.level-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 60%);border-radius:inherit;pointer-events:none;}
+.level-btn:active{transform:scale(.97)}
+.level-btn:hover{transform:translateY(-2px)}
+.level-icon{font-size:2rem;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.level-text{text-align:left;flex:1}
+.level-name{font-size:1.25rem;color:#fff;display:block;text-shadow:0 2px 4px rgba(0,0,0,.3)}
+.level-desc{font-size:.82rem;opacity:.85;display:block;font-weight:700;margin-top:2px;color:rgba(255,255,255,.8)}
+.level-stars{font-size:1rem;letter-spacing:2px;margin-left:auto;flex-shrink:0}
+#btn-easy{background:linear-gradient(135deg,var(--easy),var(--easy2));box-shadow:0 6px 20px rgba(34,197,94,.4)}
+#btn-medium{background:linear-gradient(135deg,var(--med),var(--med2));box-shadow:0 6px 20px rgba(245,158,11,.4)}
+#btn-hard{background:linear-gradient(135deg,var(--hard),var(--hard2));box-shadow:0 6px 20px rgba(239,68,68,.4)}
+#howto-link{color:rgba(255,255,255,.5);font-size:.88rem;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px;letter-spacing:.3px;}
+#howto-link:hover{color:rgba(255,255,255,.8)}
+#best-score-pill{background:var(--card);border:2px solid rgba(255,255,255,.12);border-radius:50px;padding:10px 22px;display:flex;align-items:center;gap:10px;font-size:.9rem;font-weight:700;}
+#best-score-pill span{color:var(--muted)}
+#best-val{color:#fbbf24;font-size:1.1rem;font-family:'Fredoka One',sans-serif}
+
+/* HOW TO PLAY */
+.rule-card{width:100%;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 18px;display:flex;align-items:flex-start;gap:14px;}
+.rule-icon{font-size:1.8rem;flex-shrink:0;margin-top:2px}
+.rule-text h3{font-size:1rem;font-weight:800;color:var(--white);margin-bottom:2px}
+.rule-text p{font-size:.85rem;color:var(--muted);font-weight:600;line-height:1.4}
+
+/* GAME */
+#progress-row{width:100%;display:flex;align-items:center;gap:10px;}
+#q-counter{font-size:.82rem;font-weight:800;color:var(--muted);white-space:nowrap}
+#progress-bar-wrap{flex:1;height:10px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+#progress-bar{height:100%;border-radius:99px;transition:width .4s cubic-bezier(.34,1.56,.64,1);background:linear-gradient(90deg,var(--level-col),var(--level-col2));width:0}
+#score-row{width:100%;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;}
+#score-label{font-size:.8rem;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+#score-val{font-family:'Fredoka One',sans-serif;font-size:1.5rem;color:var(--white)}
+#score-meta{font-size:.72rem;color:var(--muted);font-weight:700}
+#timer-wrap{width:100%;display:none}
+#timer-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+#timer-num{font-family:'Fredoka One',sans-serif;font-size:1.4rem;transition:color .3s;min-width:38px;text-align:right;}
+#timer-bar-wrap{flex:1;height:12px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+#timer-bar{height:100%;border-radius:99px;transition:width 1s linear,background .3s;background:var(--level-col);width:100%}
+#timer-label{font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;text-align:right}
+#question-card{width:100%;background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:2px solid rgba(255,255,255,.15);border-radius:24px;padding:30px 24px 24px;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+#question-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%);}
+#question-text{font-family:'Fredoka One',sans-serif;font-size:clamp(2.2rem,10vw,3rem);letter-spacing:1px;color:var(--white);text-shadow:0 4px 20px rgba(0,0,0,.4);line-height:1;}
+#question-hint{font-size:.8rem;font-weight:700;color:var(--muted);margin-top:10px;letter-spacing:.3px;}
+#answer-display{width:100%;background:rgba(255,255,255,.06);border:3px solid rgba(255,255,255,.25);border-radius:16px;padding:14px 20px;text-align:center;min-height:58px;font-family:'Fredoka One',sans-serif;font-size:2rem;color:var(--white);letter-spacing:3px;transition:border-color .2s;}
+#answer-display.has-val{border-color:var(--level-col);color:var(--white)}
+#answer-display.empty{color:var(--muted);font-size:1.2rem;font-family:'Nunito',sans-serif;font-weight:700}
+#numpad{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.np-btn{border:none;border-radius:14px;font-family:'Fredoka One',sans-serif;font-size:1.5rem;cursor:pointer;padding:0;height:56px;transition:transform .1s,box-shadow .1s;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;}
+.np-btn:active{transform:scale(.9)}
+.np-digit{background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.06));border:2px solid rgba(255,255,255,.12);color:var(--white);box-shadow:0 4px 12px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.1);}
+.np-digit:hover{background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.1))}
+.np-bksp{background:linear-gradient(145deg,rgba(239,68,68,.25),rgba(239,68,68,.12));border:2px solid rgba(239,68,68,.3);color:#fca5a5;font-size:1.3rem;}
+.np-bksp:hover{background:linear-gradient(145deg,rgba(239,68,68,.35),rgba(239,68,68,.2))}
+.np-zero{background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.06));border:2px solid rgba(255,255,255,.12);color:var(--white);}
+.np-submit{background:linear-gradient(135deg,var(--level-col),var(--level-col2));color:#fff;font-size:1rem;font-weight:800;font-family:'Nunito',sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);transition:border-color .4s,background .4s;}
+.np-submit:hover{filter:brightness(1.1)}
+.np-submit:active{transform:scale(.93)}
+
+/* FEEDBACK OVERLAY */
+#feedback{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .25s;}
+#feedback.show{opacity:1;pointer-events:auto}
+#feedback-bg{position:absolute;inset:0;transition:background .25s}
+#feedback-icon{font-size:6rem;position:relative;z-index:1;animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5));}
+@keyframes popIn{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0deg)}}
+#feedback-word{font-family:'Fredoka One',sans-serif;font-size:2.5rem;position:relative;z-index:1;letter-spacing:1px;color:var(--white);text-shadow:0 4px 20px rgba(0,0,0,.5);animation:popIn .4s .08s cubic-bezier(.34,1.56,.64,1) both;}
+#feedback-answer{font-size:1.1rem;font-weight:800;color:rgba(255,255,255,.9);position:relative;z-index:1;letter-spacing:.5px;animation:popIn .4s .16s cubic-bezier(.34,1.56,.64,1) both;}
+#feedback-sub{font-size:.9rem;font-weight:700;color:rgba(255,255,255,.65);position:relative;z-index:1;animation:popIn .4s .22s cubic-bezier(.34,1.56,.64,1) both;}
+#confetti-layer{position:absolute;inset:0;pointer-events:none;z-index:0}
+.confetto{position:absolute;top:-10px;width:10px;height:10px;border-radius:2px;animation:fall var(--spd,1.2s) var(--del,.1s) linear forwards;}
+@keyframes fall{0%{transform:translateY(0) rotate(0deg) scaleX(1);opacity:1}80%{opacity:1}100%{transform:translateY(110vh) rotate(720deg) scaleX(.3);opacity:0}}
+
+/* RESULTS */
+#results-trophy{font-size:4.5rem;animation:bob 2s ease-in-out infinite;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5))}
+#results-score{font-family:'Fredoka One',sans-serif;font-size:3.5rem;background:linear-gradient(135deg,#fbbf24,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+#results-fraction{font-size:1rem;color:var(--muted);font-weight:700;margin-top:-8px}
+#stars-row{font-size:2rem;letter-spacing:4px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
+#tiered-msg{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 20px;text-align:center;font-size:1.05rem;font-weight:800;color:var(--white);line-height:1.4;width:100%;}
+#breakdown{width:100%;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center}
+.breakdown-row .label{font-size:.85rem;font-weight:700;color:var(--muted)}
+.breakdown-row .val{font-weight:800;font-size:.95rem}
+.val.correct{color:var(--easy)}.val.wrong{color:var(--hard)}.val.level-name{color:#60a5fa}
+#pb-pill{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(244,114,182,.1));border:2px solid rgba(251,191,36,.3);border-radius:50px;padding:10px 22px;display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:700;width:100%;justify-content:center;}
+#pb-pill .pb-icon{font-size:1.1rem}
+#pb-text{color:#fde68a}
+.results-btn{width:100%;border:none;border-radius:var(--radius);padding:16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1.05rem;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.results-btn:hover{transform:translateY(-2px)}
+.results-btn:active{transform:scale(.97)}
+#btn-play-again{background:linear-gradient(135deg,var(--easy),var(--easy2));color:#fff;box-shadow:0 6px 20px rgba(34,197,94,.35);}
+#btn-new-level{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.06));border:2px solid rgba(255,255,255,.2);color:var(--white);}
+.btn-primary{border:none;border-radius:var(--radius);padding:14px 32px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;background:linear-gradient(135deg,var(--mid),var(--blue));color:var(--white);box-shadow:var(--shadow);transition:transform .15s;}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-primary:active{transform:scale(.97)}
+.screen-heading{font-family:'Fredoka One',sans-serif;font-size:1.8rem;text-align:center;letter-spacing:.5px;background:linear-gradient(135deg,#60a5fa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+@media(max-height:660px){#mascot{font-size:3.5rem}#home-title{font-size:1.8rem}.level-btn{padding:13px 18px}.level-icon{font-size:1.6rem}}
+
+/* ══ INSTALL BANNER (Android) ══════════════════════════════ */
+#install-banner{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:linear-gradient(135deg,#1e3a5f,#0f2744);
+  border-top:2px solid rgba(96,165,250,.4);
+  border-radius:20px 20px 0 0;
+  padding:18px 20px;z-index:200;
+  display:none;
+  flex-direction:column;gap:12px;
+  box-shadow:0 -8px 40px rgba(0,0,0,.5);
+  animation:slideUp .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp{from{transform:translateX(-50%) translateY(100%)}to{transform:translateX(-50%) translateY(0)}}
+#install-banner.show{display:flex}
+#install-banner-top{display:flex;align-items:center;gap:12px;}
+#install-app-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1a1a2e,#0f3460);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(255,255,255,.15);flex-shrink:0;}
+#install-banner-text{flex:1}
+#install-banner-title{font-family:'Fredoka One',sans-serif;font-size:1.1rem;color:#fff;line-height:1.2}
+#install-banner-sub{font-size:.78rem;color:rgba(255,255,255,.55);font-weight:600;margin-top:2px}
+#install-banner-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:1.4rem;cursor:pointer;padding:4px;line-height:1;flex-shrink:0;}
+#install-banner-close:hover{color:rgba(255,255,255,.8)}
+#install-banner-actions{display:flex;gap:10px;}
+#install-btn-do{flex:1;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border:none;border-radius:12px;padding:13px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;color:#fff;cursor:pointer;transition:transform .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+#install-btn-do:hover{transform:translateY(-1px)}
+#install-btn-do:active{transform:scale(.97)}
+#install-btn-later{flex:0 0 auto;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:13px 18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;color:rgba(255,255,255,.6);cursor:pointer;}
+#install-btn-later:hover{background:rgba(255,255,255,.14)}
+
+/* Feature chips */
+#install-features{display:flex;gap:6px;flex-wrap:wrap;}
+.install-chip{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:20px;padding:4px 10px;font-size:.72rem;font-weight:700;color:#93c5fd;display:flex;align-items:center;gap:4px;}
+
+/* ══ iOS INSTALL SHEET ════════════════════════════════════ */
+#ios-sheet{
+  position:fixed;inset:0;z-index:300;
+  display:none;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+#ios-sheet.show{display:flex}
+#ios-sheet-inner{
+  width:100%;max-width:480px;
+  background:linear-gradient(180deg,#1e2d45,#131f30);
+  border-radius:24px 24px 0 0;
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:20px 22px 44px;
+  display:flex;flex-direction:column;gap:16px;
+  box-shadow:0 -12px 60px rgba(0,0,0,.6);
+  animation:slideUp .45s cubic-bezier(.34,1.56,.64,1);
+}
+#ios-sheet-handle{width:40px;height:4px;background:rgba(255,255,255,.25);border-radius:99px;margin:0 auto -4px;}
+#ios-sheet-header{display:flex;align-items:center;gap:12px;}
+#ios-app-icon{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#1a1a2e,#0f3460);display:flex;align-items:center;justify-content:center;font-size:1.8rem;border:2px solid rgba(255,255,255,.15);flex-shrink:0;}
+#ios-sheet-title{font-family:'Fredoka One',sans-serif;font-size:1.25rem;color:#fff;}
+#ios-sheet-sub{font-size:.82rem;color:rgba(255,255,255,.5);font-weight:600;margin-top:2px}
+.ios-step{display:flex;align-items:flex-start;gap:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;}
+.ios-step-num{background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',sans-serif;font-size:.95rem;color:#fff;flex-shrink:0;margin-top:1px;}
+.ios-step-body{flex:1}
+.ios-step-title{font-weight:800;font-size:.95rem;color:#fff;margin-bottom:3px}
+.ios-step-desc{font-size:.82rem;color:rgba(255,255,255,.55);font-weight:600;line-height:1.4}
+.ios-step-icon{font-size:1.1rem;vertical-align:middle}
+#ios-arrow{text-align:center;font-size:.75rem;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.5px;}
+#ios-close-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;color:rgba(255,255,255,.7);cursor:pointer;width:100%;}
+#ios-close-btn:hover{background:rgba(255,255,255,.14)}
+
+/* ══ PWA INSTALLED TOAST ══════════════════════════════════ */
+#pwa-toast{
+  position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  color:#fff;border-radius:50px;padding:10px 22px;
+  font-weight:800;font-size:.9rem;z-index:400;
+  opacity:0;transition:all .4s;pointer-events:none;
+  white-space:nowrap;box-shadow:0 4px 20px rgba(34,197,94,.4);
+  display:flex;align-items:center;gap:8px;
+}
+#pwa-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Install button in header (shows after banner dismissed) */
+#install-hdr-btn{display:none;font-size:.85rem;padding:6px 14px;border-radius:50px;background:linear-gradient(135deg,rgba(59,130,246,.3),rgba(99,102,241,.3));border:1px solid rgba(59,130,246,.4);color:#93c5fd;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .2s;}
+#install-hdr-btn:hover{background:linear-gradient(135deg,rgba(59,130,246,.5),rgba(99,102,241,.5));}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div id="app">
+
+  <div id="header">
+    <div id="back-btn" class="hdr-btn" onclick="goHome()">◀</div>
+    <div id="header-center">
+      <span id="header-title">MathsQuiz</span>
+      <button id="install-hdr-btn" onclick="triggerInstall()">⬇ Install</button>
+    </div>
+    <div id="mute-btn" class="hdr-btn" onclick="toggleMute()">🔊</div>
+  </div>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div id="mascot">🧮</div>
+    <h1 id="home-title">Mental Maths<br/>Challenge!</h1>
+    <p id="home-subtitle">Choose your level to start</p>
+    <button class="level-btn" id="btn-easy"   onclick="startGame(0)"><span class="level-icon">🟢</span><span class="level-text"><span class="level-name">Easy</span><span class="level-desc">No time limit — take your time!</span></span><span class="level-stars">⭐</span></button>
+    <button class="level-btn" id="btn-medium" onclick="startGame(1)"><span class="level-icon">🟡</span><span class="level-text"><span class="level-name">Medium</span><span class="level-desc">20 seconds per question</span></span><span class="level-stars">⭐⭐</span></button>
+    <button class="level-btn" id="btn-hard"   onclick="startGame(2)"><span class="level-icon">🔴</span><span class="level-text"><span class="level-name">Hard</span><span class="level-desc">10 seconds per question</span></span><span class="level-stars">⭐⭐⭐</span></button>
+    <span id="howto-link" onclick="showScreen('screen-howto')">How to Play ℹ️</span>
+    <div id="best-score-pill"><span>🏅 Best Score</span><span id="best-val">—</span></div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div id="screen-howto" class="screen">
+    <p class="screen-heading">How to Play</p>
+    <div class="rule-card"><span class="rule-icon">❓</span><div class="rule-text"><h3>10 Questions</h3><p>Each game has 10 random maths questions using +, −, ×, ÷ and numbers 1–12.</p></div></div>
+    <div class="rule-card"><span class="rule-icon">⏱️</span><div class="rule-text"><h3>Timer (Medium &amp; Hard)</h3><p>Medium: 20 seconds per question. Hard: 10 seconds. Easy has no timer.</p></div></div>
+    <div class="rule-card"><span class="rule-icon">🔢</span><div class="rule-text"><h3>Type Your Answer</h3><p>Use the number pad to type your answer, then press Submit. Use ⌫ to delete a digit.</p></div></div>
+    <div class="rule-card"><span class="rule-icon">✅</span><div class="rule-text"><h3>Scoring</h3><p>1 point for every correct answer. Your score is shown throughout the game.</p></div></div>
+    <div class="rule-card"><span class="rule-icon">🔊</span><div class="rule-text"><h3>Sounds</h3><p>Applause plays for correct answers! Use the 🔊 button to mute at any time.</p></div></div>
+    <button class="btn-primary" onclick="showScreen('screen-home')">← Back to Home</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen">
+    <div id="progress-row"><span id="q-counter">Q1 of 10</span><div id="progress-bar-wrap"><div id="progress-bar"></div></div></div>
+    <div id="score-row"><span id="score-label">Score</span><span id="score-val">0 / 0</span><span id="score-meta">correct out of asked</span></div>
+    <div id="timer-wrap"><div id="timer-row"><span id="timer-label">Time</span><div id="timer-bar-wrap"><div id="timer-bar"></div></div><span id="timer-num">20s</span></div></div>
+    <div id="question-card"><div id="question-text">3 + 4 = ?</div><div id="question-hint">Tap the number pad below</div></div>
+    <div id="answer-display" class="empty">Your answer…</div>
+    <div id="numpad">
+      <button class="np-btn np-digit" onclick="padPress('1')">1</button>
+      <button class="np-btn np-digit" onclick="padPress('2')">2</button>
+      <button class="np-btn np-digit" onclick="padPress('3')">3</button>
+      <button class="np-btn np-digit" onclick="padPress('4')">4</button>
+      <button class="np-btn np-digit" onclick="padPress('5')">5</button>
+      <button class="np-btn np-digit" onclick="padPress('6')">6</button>
+      <button class="np-btn np-digit" onclick="padPress('7')">7</button>
+      <button class="np-btn np-digit" onclick="padPress('8')">8</button>
+      <button class="np-btn np-digit" onclick="padPress('9')">9</button>
+      <button class="np-btn np-bksp" onclick="padBackspace()">⌫</button>
+      <button class="np-btn np-zero" onclick="padPress('0')">0</button>
+      <button class="np-btn np-submit" id="submit-btn" onclick="submitAnswer()">Submit ✓</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="screen-results" class="screen">
+    <div id="results-trophy">🏆</div>
+    <div id="results-score">0</div>
+    <div id="results-fraction">out of 10</div>
+    <div id="stars-row">☆☆☆☆☆</div>
+    <div id="tiered-msg">Great effort!</div>
+    <div id="pb-pill"><span class="pb-icon">🏅</span><span id="pb-text">—</span></div>
+    <div id="breakdown">
+      <div class="breakdown-row"><span class="label">✅ Correct</span><span class="val correct" id="br-correct">0</span></div>
+      <div class="breakdown-row"><span class="label">❌ Incorrect</span><span class="val wrong" id="br-wrong">0</span></div>
+      <div class="breakdown-row"><span class="label">🎮 Level</span><span class="val level-name" id="br-level">Easy</span></div>
+    </div>
+    <button class="results-btn" id="btn-play-again" onclick="playAgain()">▶ Play Again (Same Level)</button>
+    <button class="results-btn" id="btn-new-level"  onclick="goHome()">🏠 Choose a New Level</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Feedback overlay -->
+<div id="feedback">
+  <div id="feedback-bg"></div>
+  <div id="confetti-layer"></div>
+  <div id="feedback-icon">✓</div>
+  <div id="feedback-word">Correct!</div>
+  <div id="feedback-answer">3 + 4 = 7 ✓</div>
+  <div id="feedback-sub">Keep going!</div>
+</div>
+
+<!-- ══ ANDROID INSTALL BANNER ══════════════════════════════ -->
+<div id="install-banner">
+  <div id="install-banner-top">
+    <div id="install-app-icon">🧮</div>
+    <div id="install-banner-text">
+      <div id="install-banner-title">Add MathsQuiz to Home Screen</div>
+      <div id="install-banner-sub">Play offline, anytime — no internet needed</div>
+    </div>
+    <button id="install-banner-close" onclick="dismissBanner()" aria-label="Close">✕</button>
+  </div>
+  <div id="install-features">
+    <span class="install-chip">⚡ Works offline</span>
+    <span class="install-chip">🏠 Home screen icon</span>
+    <span class="install-chip">📱 Full screen</span>
+    <span class="install-chip">🆓 Free forever</span>
+  </div>
+  <div id="install-banner-actions">
+    <button id="install-btn-do" onclick="doInstall()">
+      <span>⬇</span> Install App
+    </button>
+    <button id="install-btn-later" onclick="dismissBanner()">Not now</button>
+  </div>
+</div>
+
+<!-- ══ iOS INSTALL SHEET ════════════════════════════════════ -->
+<div id="ios-sheet" onclick="closeIosSheet(event)">
+  <div id="ios-sheet-inner">
+    <div id="ios-sheet-handle"></div>
+    <div id="ios-sheet-header">
+      <div id="ios-app-icon">🧮</div>
+      <div>
+        <div id="ios-sheet-title">Install MathsQuiz</div>
+        <div id="ios-sheet-sub">Add to your Home Screen in 3 easy steps</div>
+      </div>
+    </div>
+    <div class="ios-step">
+      <div class="ios-step-num">1</div>
+      <div class="ios-step-body">
+        <div class="ios-step-title">Tap the Share button</div>
+        <div class="ios-step-desc">Find the <span class="ios-step-icon">□↑</span> Share icon at the bottom of Safari (or at the top on iPad)</div>
+      </div>
+    </div>
+    <div id="ios-arrow">▼</div>
+    <div class="ios-step">
+      <div class="ios-step-num">2</div>
+      <div class="ios-step-body">
+        <div class="ios-step-title">Scroll down and tap "Add to Home Screen"</div>
+        <div class="ios-step-desc">Look for <span class="ios-step-icon">➕</span> Add to Home Screen in the share menu</div>
+      </div>
+    </div>
+    <div id="ios-arrow">▼</div>
+    <div class="ios-step">
+      <div class="ios-step-num">3</div>
+      <div class="ios-step-body">
+        <div class="ios-step-title">Tap "Add" to confirm</div>
+        <div class="ios-step-desc">MathsQuiz will appear on your Home Screen and work offline 🎉</div>
+      </div>
+    </div>
+    <button id="ios-close-btn" onclick="closeIosSheet()">Got it — I'll do this now</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="pwa-toast">✅ MathsQuiz installed!</div>
+
+<script>
+'use strict';
+
+/* ══ PWA — Manifest (injected as blob URL) ═══════════════════
+   A single-file PWA can't reference an external manifest.json,
+   so we generate the manifest as a JSON blob and link it dynamically.
+   The icon is an SVG encoded as a data URI — no external files needed.
+═══════════════════════════════════════════════════════════════ */
+(function injectManifest(){
+  // SVG icon — a navy circle with a white calculator emoji
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="96" fill="#1a1a2e"/>
+    <rect x="80" y="80" width="352" height="352" rx="48" fill="#0f3460"/>
+    <rect x="120" y="130" width="272" height="70" rx="14" fill="#2E75B6"/>
+    <text x="256" y="189" text-anchor="middle" font-family="Arial" font-size="54" font-weight="bold" fill="white">123</text>
+    <rect x="120" y="220" width="78" height="54" rx="12" fill="#22c55e"/>
+    <rect x="217" y="220" width="78" height="54" rx="12" fill="#22c55e"/>
+    <rect x="314" y="220" width="78" height="54" rx="12" fill="#2E75B6"/>
+    <rect x="120" y="290" width="78" height="54" rx="12" fill="#f59e0b"/>
+    <rect x="217" y="290" width="78" height="54" rx="12" fill="#f59e0b"/>
+    <rect x="314" y="290" width="78" height="108" rx="12" fill="#ef4444"/>
+    <rect x="120" y="360" width="78" height="54" rx="12" fill="#374151"/>
+    <rect x="217" y="360" width="78" height="54" rx="12" fill="#374151"/>
+    <text x="159" y="257" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">7</text>
+    <text x="256" y="257" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">8</text>
+    <text x="353" y="257" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">÷</text>
+    <text x="159" y="327" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">4</text>
+    <text x="256" y="327" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">5</text>
+    <text x="353" y="350" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">✓</text>
+    <text x="159" y="397" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">⌫</text>
+    <text x="256" y="397" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="white">0</text>
+  </svg>`;
+
+  const iconDataUri = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
+
+  const manifest = {
+    name: 'MathsQuiz — Mental Arithmetic',
+    short_name: 'MathsQuiz',
+    description: 'Mental arithmetic practice for children aged 6–11',
+    start_url: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#1a1a2e',
+    theme_color: '#1a1a2e',
+    categories: ['education', 'games'],
+    icons: [
+      { src: iconDataUri, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: iconDataUri, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
+    ]
+  };
+
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel   = 'manifest';
+  link.href  = url;
+  document.head.appendChild(link);
+
+  // iOS apple-touch-icon
+  const iconLink = document.createElement('link');
+  iconLink.rel   = 'apple-touch-icon';
+  iconLink.href  = iconDataUri;
+  document.head.appendChild(iconLink);
+})();
+
+
+/* ══ PWA — Service Worker ════════════════════════════════════
+   Injected as a blob URL so no external sw.js file is needed.
+   Caches the page on install; serves from cache first.
+═══════════════════════════════════════════════════════════════ */
+(function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+
+  const CACHE = 'mathsquiz-v1.0';
+  const swCode = `
+const CACHE = '${CACHE}';
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(['./'])).then(() => self.skipWaiting())
+  );
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if(cached) return cached;
+      return fetch(e.request).then(response => {
+        if(response && response.status === 200 && response.type === 'basic'){
+          const clone = response.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return response;
+      }).catch(() => cached);
+    })
+  );
+});
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl)
+    .then(reg => {
+      console.log('[MathsQuiz] SW registered', reg.scope);
+      // Listen for the app actually being installed (appinstalled event)
+      window.addEventListener('appinstalled', () => showToast('✅ MathsQuiz installed!'));
+    })
+    .catch(err => console.warn('[MathsQuiz] SW failed:', err));
+})();
+
+
+/* ══ Install prompt logic ════════════════════════════════════ */
+let deferredPrompt  = null;   // Android BeforeInstallPromptEvent
+let bannerDismissed = false;
+
+// Detect platform
+const isIos     = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isAndroid = /Android/.test(navigator.userAgent);
+const isInStandaloneMode = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true;
+
+// Capture Android/Chrome install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();           // stop mini-infobar
+  deferredPrompt = e;
+  if(!isInStandaloneMode() && !bannerDismissed){
+    // Wait 3s so user sees the app first
+    setTimeout(showAndroidBanner, 3000);
+  }
+});
+
+function showAndroidBanner(){
+  if(bannerDismissed || isInStandaloneMode()) return;
+  document.getElementById('install-banner').classList.add('show');
+  document.getElementById('install-hdr-btn').style.display = 'none';
+}
+
+function dismissBanner(){
+  document.getElementById('install-banner').classList.remove('show');
+  bannerDismissed = true;
+  // Show small header button instead
+  if(deferredPrompt){
+    document.getElementById('install-hdr-btn').style.display = 'inline-flex';
+  }
+}
+
+async function doInstall(){
+  if(!deferredPrompt) return;
+  dismissBanner();
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  if(outcome === 'accepted'){
+    document.getElementById('install-hdr-btn').style.display = 'none';
+    showToast('✅ Installing MathsQuiz…');
+  }
+}
+
+function triggerInstall(){
+  if(deferredPrompt){
+    doInstall();
+  } else if(isIos){
+    showIosSheet();
+  }
+}
+
+// iOS sheet
+function showIosSheet(){
+  document.getElementById('ios-sheet').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeIosSheet(e){
+  if(e && e.target !== document.getElementById('ios-sheet')) return;
+  document.getElementById('ios-sheet').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// On iOS in Safari (not standalone): show header install button after 2s
+if(isIos && !isInStandaloneMode()){
+  setTimeout(()=>{
+    document.getElementById('install-hdr-btn').style.display = 'inline-flex';
+  }, 2000);
+}
+
+// Toast
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('pwa-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 3500);
+}
+
+/* ══ Stars background ════════════════════════════════════════ */
+(function(){
+  const el=document.getElementById('stars');
+  for(let i=0;i<60;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*3+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--del:${Math.random()*4}s`;
+    el.appendChild(s);
+  }
+})();
+
+/* ══ Game state ══════════════════════════════════════════════ */
+let muted=false,level=0,score=0,qNum=0,currentAnswer=0,currentQStr='';
+let answerInput='',timerInterval=null,timeLeft=0,feedbackTimeout=null,sessionBest=-1;
+const TOTAL_Q=10;
+const LEVEL_NAMES=['Easy','Medium','Hard'];
+const LEVEL_TIMES=[0,20,10];
+const LEVEL_COLS=[['#22c55e','#16a34a'],['#f59e0b','#d97706'],['#ef4444','#dc2626']];
+
+/* ══ Audio ═══════════════════════════════════════════════════ */
+let audioCtx=null;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(freq,type,duration,volume=0.18,decay=0.6){
+  if(muted)return;
+  try{const ctx=getCtx();const osc=ctx.createOscillator();const gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);osc.type=type;osc.frequency.value=freq;
+  gain.gain.setValueAtTime(volume,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+decay);
+  osc.start();osc.stop(ctx.currentTime+duration);}catch(e){}
+}
+function playCorrect(){if(muted)return;[[523,0],[659,.08],[784,.16],[1047,.28],[1319,.42]].forEach(([f,d])=>setTimeout(()=>playTone(f,'sine',.35,0.14,0.35),d*1000));setTimeout(()=>playTone(2093,'sine',.25,0.06,0.25),300);}
+function playWrong(){if(muted)return;playTone(180,'sawtooth',.35,0.12,0.35);setTimeout(()=>playTone(140,'sawtooth',.3,0.10,0.3),180);}
+function playTick(){if(muted)return;playTone(880,'sine',.06,0.05,0.06);}
+function playFanfare(){if(muted)return;[[523,0],[659,.1],[784,.2],[1047,.35],[1319,.5],[1047,.65],[1568,.8]].forEach(([f,d])=>setTimeout(()=>playTone(f,'sine',.4,0.15,0.4),d*1000));}
+function toggleMute(){muted=!muted;document.getElementById('mute-btn').textContent=muted?'🔇':'🔊';}
+
+/* ══ Theme ═══════════════════════════════════════════════════ */
+function applyLevelTheme(lv){
+  const r=document.documentElement.style;
+  r.setProperty('--level-col',LEVEL_COLS[lv][0]);
+  r.setProperty('--level-col2',LEVEL_COLS[lv][1]);
+}
+
+/* ══ Screens ═════════════════════════════════════════════════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('back-btn').style.display=(id!=='screen-home')?'flex':'none';
+  window.scrollTo(0,0);
+}
+function goHome(){stopTimer();showScreen('screen-home');applyLevelTheme(0);updateBestDisplay();}
+
+/* ══ Questions ═══════════════════════════════════════════════ */
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function generateQuestion(){
+  const ops=['+','-','×','÷'];const op=ops[randInt(0,3)];
+  let a=randInt(1,12),b=randInt(1,12),answer,str;
+  if(op==='÷'){const k=randInt(1,12);a=b*k;answer=a/b;str=`${a} ÷ ${b}`;}
+  else if(op==='-'){if(a<b){const t=a;a=b;b=t;}answer=a-b;str=`${a} − ${b}`;}
+  else if(op==='×'){answer=a*b;str=`${a} × ${b}`;}
+  else{answer=a+b;str=`${a} + ${b}`;}
+  return{str,answer};
+}
+
+/* ══ Game flow ═══════════════════════════════════════════════ */
+function startGame(lv){
+  level=lv;score=0;qNum=0;applyLevelTheme(lv);showScreen('screen-game');
+  document.getElementById('submit-btn').style.background=`linear-gradient(135deg,${LEVEL_COLS[lv][0]},${LEVEL_COLS[lv][1]})`;
+  nextQuestion();
+}
+function nextQuestion(){
+  stopTimer();answerInput='';updateAnswerDisplay();
+  const{str,answer}=generateQuestion();currentQStr=str;currentAnswer=answer;
+  document.getElementById('question-text').textContent=`${str} = ?`;
+  document.getElementById('q-counter').textContent=`Q${qNum+1} of ${TOTAL_Q}`;
+  document.getElementById('score-val').textContent=`${score} / ${qNum}`;
+  document.getElementById('progress-bar').style.width=(qNum/TOTAL_Q*100)+'%';
+  const tw=document.getElementById('timer-wrap');
+  if(level===0){tw.style.display='none';}
+  else{tw.style.display='block';timeLeft=LEVEL_TIMES[level];updateTimerDisplay(timeLeft);startTimer();}
+}
+function updateAnswerDisplay(){
+  const el=document.getElementById('answer-display');
+  if(answerInput===''){el.textContent='Your answer…';el.classList.add('empty');el.classList.remove('has-val');}
+  else{el.textContent=answerInput;el.classList.remove('empty');el.classList.add('has-val');}
+}
+function padPress(d){if(answerInput.length>=4)return;answerInput+=d;updateAnswerDisplay();}
+function padBackspace(){answerInput=answerInput.slice(0,-1);updateAnswerDisplay();}
+function submitAnswer(){
+  if(answerInput==='')return;
+  const userAns=parseInt(answerInput,10);const correct=(userAns===currentAnswer);
+  stopTimer();if(correct)score++;qNum++;showFeedback(correct,userAns);
+}
+
+/* ══ Timer ═══════════════════════════════════════════════════ */
+function startTimer(){
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    timeLeft--;updateTimerDisplay(timeLeft);
+    if(timeLeft<=3)playTick();
+    if(timeLeft<=0){stopTimer();qNum++;showFeedback(false,null,true);}
+  },1000);
+}
+function stopTimer(){clearInterval(timerInterval);timerInterval=null;}
+function updateTimerDisplay(t){
+  const bar=document.getElementById('timer-bar'),num=document.getElementById('timer-num');
+  const limit=LEVEL_TIMES[level],pct=Math.max(0,(t/limit)*100);
+  bar.style.width=pct+'%';num.textContent=`${Math.max(0,t)}s`;
+  if(pct>50){bar.style.background=LEVEL_COLS[level][0];num.style.color=LEVEL_COLS[level][0];}
+  else if(pct>25){bar.style.background='#f59e0b';num.style.color='#f59e0b';}
+  else{bar.style.background='#ef4444';num.style.color='#ef4444';}
+}
+
+/* ══ Feedback ════════════════════════════════════════════════ */
+function showFeedback(correct,userAns,expired=false){
+  clearTimeout(feedbackTimeout);
+  const fb=document.getElementById('feedback'),bg=document.getElementById('feedback-bg');
+  const icon=document.getElementById('feedback-icon'),word=document.getElementById('feedback-word');
+  const ansEl=document.getElementById('feedback-answer'),sub=document.getElementById('feedback-sub');
+  const confLayer=document.getElementById('confetti-layer');confLayer.innerHTML='';
+  if(correct){
+    playCorrect();bg.style.background='linear-gradient(135deg,rgba(22,163,74,.92),rgba(16,185,129,.85))';
+    icon.textContent='✅';word.textContent='Correct!';ansEl.textContent=`${currentQStr} = ${currentAnswer} ✓`;
+    sub.textContent=qNum<TOTAL_Q?'Keep going!':'Last one!';spawnConfetti(confLayer);
+  }else if(expired){
+    playWrong();bg.style.background='linear-gradient(135deg,rgba(220,38,38,.92),rgba(239,68,68,.85))';
+    icon.textContent='⏰';word.textContent="Time's Up!";ansEl.textContent=`Answer: ${currentQStr} = ${currentAnswer}`;
+    sub.textContent="Don't worry — keep going!";
+  }else{
+    playWrong();bg.style.background='linear-gradient(135deg,rgba(220,38,38,.92),rgba(239,68,68,.85))';
+    icon.textContent='❌';word.textContent='Not quite!';ansEl.textContent=`${currentQStr} = ${currentAnswer}`;
+    sub.textContent="You'll get the next one!";
+  }
+  fb.classList.add('show');
+  feedbackTimeout=setTimeout(()=>{fb.classList.remove('show');if(qNum>=TOTAL_Q)showResults();else nextQuestion();},correct?1400:1800);
+}
+
+/* ══ Confetti ════════════════════════════════════════════════ */
+const CC=['#fbbf24','#f472b6','#60a5fa','#34d399','#a78bfa','#fb923c','#ffffff'];
+function spawnConfetti(layer){
+  for(let i=0;i<55;i++){
+    const el=document.createElement('div');el.className='confetto';
+    el.style.cssText=`left:${Math.random()*100}%;background:${CC[Math.floor(Math.random()*CC.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};--spd:${0.9+Math.random()*.8}s;--del:${Math.random()*.4}s;`;
+    layer.appendChild(el);
+  }
+}
+
+/* ══ Results ═════════════════════════════════════════════════ */
+function showResults(){
+  playFanfare();showScreen('screen-results');
+  const stars=Math.min(5,Math.floor((score/TOTAL_Q)*5));
+  document.getElementById('results-score').textContent=score;
+  document.getElementById('results-fraction').textContent=`out of ${TOTAL_Q}`;
+  document.getElementById('stars-row').textContent='⭐'.repeat(stars)+'☆'.repeat(5-stars);
+  document.getElementById('br-correct').textContent=score;
+  document.getElementById('br-wrong').textContent=TOTAL_Q-score;
+  document.getElementById('br-level').textContent=LEVEL_NAMES[level];
+  const msgs=["Great effort! Every attempt helps you improve. 💪","Good work! Keep practising to boost your score. 📚","Well done! Can you get 8 or more next time? 🎯","Excellent! You're nearly at the top — go for 10! 🚀","Amazing! You're a Maths Star! 🌟"];
+  document.getElementById('tiered-msg').textContent=msgs[Math.min(4,Math.floor(score/2))];
+  const pbEl=document.getElementById('pb-text');
+  if(sessionBest<0){sessionBest=score;pbEl.textContent=`First score: ${score}/${TOTAL_Q}`;}
+  else if(score>sessionBest){pbEl.textContent=`🎉 New Best: ${score}/${TOTAL_Q}! (was ${sessionBest})`;sessionBest=score;}
+  else{pbEl.textContent=`Best this session: ${sessionBest}/${TOTAL_Q}`;}
+  updateBestDisplay();
+}
+function updateBestDisplay(){document.getElementById('best-val').textContent=sessionBest>=0?`${sessionBest} / ${TOTAL_Q}`:'—';}
+function playAgain(){startGame(level);}
+
+/* ══ Keyboard ════════════════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('screen-game').classList.contains('active')){
+    if(e.key>='0'&&e.key<='9')padPress(e.key);
+    if(e.key==='Backspace'||e.key==='Delete')padBackspace();
+    if(e.key==='Enter')submitAnswer();
+  }
+});
+
+/* ══ Prevent double-tap zoom ═════════════════════════════════ */
+document.querySelectorAll('button,.level-btn').forEach(b=>{
+  b.addEventListener('touchend',e=>e.preventDefault(),{passive:false});
+});
+</script>
+</body>
+</html>
